@@ -10,10 +10,6 @@ from razdel import sentenize, tokenize
 from document_chunker.config import NLPConfig
 
 
-# ---------------------------------------------------------------------------
-# Text preprocessing
-# ---------------------------------------------------------------------------
-
 def preprocess_text(
     logger: Logger,
     nlp_config: NLPConfig,

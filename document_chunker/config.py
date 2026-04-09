@@ -1,23 +1,36 @@
-import os
 from dataclasses import dataclass, field
 from functools import lru_cache
+from typing import Optional
 
 import pymorphy3
 import tiktoken
 from stop_words import get_stop_words
+from pydantic import field as pydantic_field
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    file_worker_url: str = "http://localhost:9000/parse"
-    libreoffice_timeout: int = 60
-    chunk_size: int = 512
-    overlap: int = 1
+    file_worker_url: str = pydantic_field(
+        description="URL of the OCR / file-worker service (e.g. http://file-worker:9000/parse)"
+    )
+    libreoffice_timeout: int = pydantic_field(
+        default=60,
+        description="Seconds allowed for LibreOffice .doc -> .docx conversion",
+    )
+    chunk_size: int = pydantic_field(
+        default=512,
+        description="Default max tokens per chunk",
+    )
+    overlap: int = pydantic_field(
+        default=1,
+        description="Default sentence overlap between adjacent chunks",
+    )
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"
+    model_config = {
+        "env_file": ".env",
+        "env_file_encoding": "utf-8",
+        "extra": "ignore",
+    }
 
 
 @lru_cache

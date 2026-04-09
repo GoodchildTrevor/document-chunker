@@ -1,0 +1,20 @@
+services:
+  document-chunker:
+    build: .
+    container_name: document_chunker
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8001}:8001"
+    environment:
+      FILE_WORKER_URL: ${FILE_WORKER_URL}
+      LIBREOFFICE_TIMEOUT: ${LIBREOFFICE_TIMEOUT:-60}
+      CHUNK_SIZE: ${CHUNK_SIZE:-512}
+      OVERLAP: ${OVERLAP:-1}
+    volumes:
+      - /tmp/chunker_tmp:/tmp   # shared tmp for LibreOffice conversions
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

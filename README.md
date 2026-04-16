@@ -148,7 +148,7 @@ docker compose up --build
 
 | Variable | Default | Description |
 |---|---|---|
-| `FILE_WORKER_URL` | *(required)* | URL of the OCR/extraction service for PDF pages and images |
+| `FILE_WORKER_URL` | *(required)* | URL of the file-worker OCR/extraction service |
 | `LIBREOFFICE_TIMEOUT` | `60` | Seconds allowed for `.doc` → `.docx` conversion |
 | `CHUNK_SIZE` | `512` | Default max tokens per chunk |
 | `OVERLAP` | `1` | Default sentence overlap between adjacent chunks |
@@ -156,6 +156,34 @@ docker compose up --build
 
 ## External dependencies
 
-`/chunk` requires a running **file-worker** service reachable at `FILE_WORKER_URL`. This service handles OCR for PDF pages and image extraction. It is not included in this repository — configure `FILE_WORKER_URL` to point to your own deployment.
+### file-worker
 
-`/chunk-text` has no external dependencies beyond the Python packages listed in `pyproject.toml`.
+`/chunk` requires a running [**file-worker**](https://github.com/GoodchildTrevor/file-worker) service, configured via `FILE_WORKER_URL`.
+
+**What file-worker does:** extracts raw text from files before chunking. It handles PDF page rendering + OCR (Tesseract / Ollama vision model), `.doc` → `.docx` conversion via LibreOffice, image text extraction, and audio/video transcription via Whisper. It exposes a single endpoint:
+
+```
+POST /filework  multipart/form-data  →  plain text string
+```
+
+**Interaction flow for `/chunk`:**
+
+```
+document-chunker  POST /chunk (file upload)
+  │
+  ├── .pdf / .docx / .doc / .xlsx detected
+  │
+  └──► file-worker  POST /filework (same file forwarded)
+         │
+         │  returns: extracted plain text
+         │
+         ▼
+  document-chunker  runs sentence segmentation → lemmatization → greedy packing
+         │
+         ▼
+  ChunkResponse  { chunks: [{ raw, lemmas, meta }] }
+```
+
+file-worker runs on port **8055** by default. Set `FILE_WORKER_URL=http://file-worker:8055/filework` in `.env`.
+
+`/chunk-text` does **not** call file-worker — it works entirely within this service.

@@ -4,8 +4,8 @@ build-backend = "setuptools.backends.legacy:build"
 
 [project]
 name = "document-chunker"
-version = "0.1.0"
-description = "FastAPI service: parse documents and return text chunks"
+version = "0.2.0"
+description = "FastAPI service: parse documents and plain text, return lemmatized chunks"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.111.0",

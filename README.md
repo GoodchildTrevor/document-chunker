@@ -1,6 +1,6 @@
 # document-chunker
 
-FastAPI microservice that parses documents (PDF, DOCX, DOC, XLSX) and returns lemmatized text chunks ready for vector embedding.
+FastAPI microservice that parses documents (PDF, DOCX, DOC, XLSX) and returns lemmatized text chunks ready for vector embedding. Also supports chunking plain text (model responses, user messages) via a dedicated endpoint.
 
 ## API
 
@@ -29,6 +29,48 @@ Upload a file and receive a list of chunks.
   ]
 }
 ```
+
+---
+
+### `POST /chunk-text`
+
+Chunk plain text (e.g. a model response or a user message) without uploading a file.
+
+**Request:** `application/json`
+```json
+{
+  "text": "Текст ответа модели или вопроса пользователя...",
+  "chunk_size": 512,
+  "overlap": 1
+}
+```
+- `text` — raw text to chunk *(required)*
+- `chunk_size` *(optional)* — max tokens per chunk, uses `CHUNK_SIZE` env default if omitted
+- `overlap` *(optional)* — sentence overlap, uses `OVERLAP` env default if omitted
+
+**Fast path:** if the entire text fits within `chunk_size` tokens, it is returned immediately as a single chunk — no sentence splitting or lemmatization is performed. The chunk will have `"lemmas": ""` and `"meta": {"tokens": N, "single_chunk": true}`.
+
+**Full path:** if the text exceeds `chunk_size` tokens, the full pipeline runs (sentence segmentation → lemmatization → greedy packing), identical to `/chunk`.
+
+**Response:** same `ChunkResponse` shape as `/chunk`, with `file_name: ""` and `file_format: "text"`.
+
+```json
+{
+  "file_name": "",
+  "file_format": "text",
+  "creation_date": "",
+  "modification_date": "",
+  "chunks": [
+    {
+      "raw": "Полный текст, если он короткий.",
+      "lemmas": "",
+      "meta": {"tokens": 12, "single_chunk": true}
+    }
+  ]
+}
+```
+
+---
 
 ### `GET /health`
 
@@ -84,7 +126,6 @@ Each chunk carries `meta` with token count, sentence indices, and (for PDFs) the
 ## Install
 
 ```bash
-# Locally:
 pip install -e .
 ```
 
@@ -103,7 +144,7 @@ docker compose up --build
 
 ## Environment variables
 
-`FILE_WORKER_URL` is **required** — the service will refuse to start without it.
+`FILE_WORKER_URL` is **required** for `/chunk` (file parsing). It is not used by `/chunk-text`.
 
 | Variable | Default | Description |
 |---|---|---|
@@ -112,3 +153,9 @@ docker compose up --build
 | `CHUNK_SIZE` | `512` | Default max tokens per chunk |
 | `OVERLAP` | `1` | Default sentence overlap between adjacent chunks |
 | `APP_PORT` | `8001` | Host port (docker-compose only) |
+
+## External dependencies
+
+`/chunk` requires a running **file-worker** service reachable at `FILE_WORKER_URL`. This service handles OCR for PDF pages and image extraction. It is not included in this repository — configure `FILE_WORKER_URL` to point to your own deployment.
+
+`/chunk-text` has no external dependencies beyond the Python packages listed in `pyproject.toml`.

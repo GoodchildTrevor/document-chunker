@@ -5,23 +5,23 @@ from typing import Optional
 import pymorphy3
 import tiktoken
 from stop_words import get_stop_words
-from pydantic import field as pydantic_field
+from pydantic import Field
 from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    file_worker_url: str = pydantic_field(
+    file_worker_url: str = Field(
         description="URL of the OCR / file-worker service (e.g. http://file-worker:9000/parse)"
     )
-    libreoffice_timeout: int = pydantic_field(
+    libreoffice_timeout: int = Field(
         default=60,
         description="Seconds allowed for LibreOffice .doc -> .docx conversion",
     )
-    chunk_size: int = pydantic_field(
+    chunk_size: int = Field(
         default=512,
         description="Default max tokens per chunk",
     )
-    overlap: int = pydantic_field(
+    overlap: int = Field(
         default=1,
         description="Default sentence overlap between adjacent chunks",
     )

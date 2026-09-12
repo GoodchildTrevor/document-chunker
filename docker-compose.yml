@@ -18,3 +18,9 @@ services:
       timeout: 5s
       retries: 3
       start_period: 15s
+    networks:
+      - dialogue_agent_network
+
+networks:
+  dialogue_agent_network:
+    external: true

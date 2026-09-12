@@ -13,7 +13,7 @@ services:
     volumes:
       - /tmp/chunker_tmp:/tmp   # shared tmp for LibreOffice conversions
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8001/health\")'"]
       interval: 30s
       timeout: 5s
       retries: 3

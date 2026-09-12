@@ -13,20 +13,7 @@ services:
     volumes:
       - /tmp/chunker_tmp:/tmp   # shared tmp for LibreOffice conversions
     healthcheck:
-      # `python` is guaranteed to exist in `python:*-slim`, so we don't need
-      # to install curl just for the healthcheck. urllib.request raises on
-      # any non-2xx, which gives us the same semantics as `curl -f`.
-      test:
-        - CMD
-        - python
-        - -c
-        - |
-          import sys, urllib.request
-          try:
-              urllib.request.urlopen("http://localhost:8001/health", timeout=3)
-          except Exception as e:
-              print("healthcheck failed:", e, file=sys.stderr)
-              sys.exit(1)
+      test: ["CMD-SHELL", "python -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8001/health\")'"]
       interval: 30s
       timeout: 5s
       retries: 3
